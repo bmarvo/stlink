@@ -24,5 +24,5 @@ target_link_libraries(${PROJECT_NAME}
     ${STLINK_LIBRARIES}
 )
 
-install(TARGETS ${PROJECT_NAME}
-        DESTINATION bin)
+# install(TARGETS ${PROJECT_NAME}
+#         DESTINATION bin)

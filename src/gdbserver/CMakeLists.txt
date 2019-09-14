@@ -19,6 +19,6 @@ else()
 	target_link_libraries(st-util ${STLINK_LIB_SHARED})
 endif()
 
-install(TARGETS st-util
-	RUNTIME DESTINATION bin
-)
+# install(TARGETS st-util
+# 	RUNTIME DESTINATION bin
+# )
