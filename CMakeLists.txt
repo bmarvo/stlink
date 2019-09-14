@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.7)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE cmake/c_flag_overrides.cmake)
 project(stlink C)
+set(CMAKE_USER_MAKE_RULES_OVERRIDE ${PROJECT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
 set(PROJECT_DESCRIPTION "Open source version of the STMicroelectronics Stlink Tools")
 set(STLINK_UDEV_RULES_DIR "/etc/udev/rules.d" CACHE PATH "Udev rules directory")
 set(STLINK_MODPROBED_DIR "/etc/modprobe.d" CACHE PATH "modprobe.d directory")
@@ -31,10 +31,10 @@ if (POLICY CMP0042)
 	cmake_policy (SET CMP0042 NEW)
 endif ()
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_SOURCE_DIR}/cmake/modules")
-include(cmake/Version.cmake)
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake/modules")
+include(${PROJECT_SOURCE_DIR}/cmake/Version.cmake)
 if(NOT MSVC)
-    include(cmake/CFlags.cmake)
+    include(${PROJECT_SOURCE_DIR}/cmake/CFlags.cmake)
 endif()
 
 ###
@@ -141,9 +141,9 @@ else()
 endif()
 
 
-install(TARGETS ${STLINK_LIB_SHARED}
-	DESTINATION ${STLINK_LIBRARY_PATH}
-)
+# install(TARGETS ${STLINK_LIB_SHARED}
+# 	DESTINATION ${STLINK_LIBRARY_PATH}
+# )
 
 ###
 # Static library
@@ -171,11 +171,11 @@ endif()
 
 set_target_properties(${STLINK_LIB_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME})
 
-if (STLINK_STATIC_LIB)
-    install(TARGETS ${STLINK_LIB_STATIC}
-        ARCHIVE DESTINATION ${STLINK_LIBRARY_PATH}
-    )
-endif()
+# if (STLINK_STATIC_LIB)
+#     install(TARGETS ${STLINK_LIB_STATIC}
+#         ARCHIVE DESTINATION ${STLINK_LIBRARY_PATH}
+#     )
+# endif()
 
 ###
 # Tools
@@ -194,21 +194,21 @@ else()
 	target_link_libraries(st-info ${STLINK_LIB_SHARED})
 endif()
 
-install(TARGETS st-flash st-info
-	RUNTIME DESTINATION bin
-)
+# install(TARGETS st-flash st-info
+# 	RUNTIME DESTINATION bin
+# )
 
-if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
-	if (STLINK_INSTALL_MODPROBE_CONF)
-		install(FILES etc/modprobe.d/stlink_v1.conf
-		DESTINATION ${STLINK_MODPROBED_DIR}/)
-	endif()
-	if (STLINK_INSTALL_UDEV_RULES)
-		file(GLOB RULES_FILES etc/udev/rules.d/*.rules)
-		install(FILES ${RULES_FILES}
-		DESTINATION ${STLINK_UDEV_RULES_DIR}/)
-	endif()
-endif()
+# if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+# 	if (STLINK_INSTALL_MODPROBE_CONF)
+# 		install(FILES etc/modprobe.d/stlink_v1.conf
+# 		DESTINATION ${STLINK_MODPROBED_DIR}/)
+# 	endif()
+# 	if (STLINK_INSTALL_UDEV_RULES)
+# 		file(GLOB RULES_FILES etc/udev/rules.d/*.rules)
+# 		install(FILES ${RULES_FILES}
+# 		DESTINATION ${STLINK_UDEV_RULES_DIR}/)
+# 	endif()
+# endif()
 
 add_subdirectory(src/gdbserver)
 add_subdirectory(src/tools/gui)
@@ -221,5 +221,5 @@ add_subdirectory(include)
 add_subdirectory(doc/man)
 add_subdirectory(tests)
 
-include(cmake/CPackConfig.cmake)
-include(CPack)
+# include(cmake/CPackConfig.cmake)
+# include(CPack)

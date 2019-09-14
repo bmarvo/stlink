@@ -10,6 +10,6 @@ foreach(test ${TESTS})
 	add_test(${test} ${CMAKE_CURRENT_BINARY_DIR}/${test})
 endforeach()
 
-add_executable(flash flash.c "${CMAKE_SOURCE_DIR}/src/tools/flash_opts.c")
+add_executable(flash flash.c "${PROJECT_SOURCE_DIR}/src/tools/flash_opts.c")
 target_link_libraries(flash ${STLINK_LIB_STATIC})
 add_test(flash ${CMAKE_CURRENT_BINARY_DIR}/flash)

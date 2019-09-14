@@ -18,16 +18,16 @@ set_target_properties(stlink-gui PROPERTIES
                       COMPILE_DEFINITIONS STLINK_UI_DIR="${CMAKE_INSTALL_PREFIX}/${INSTALLED_UI_DIR}")
 target_link_libraries(stlink-gui ${STLINK_LIB_STATIC} ${gtk_LDFLAGS})
 
-install(TARGETS stlink-gui
-        RUNTIME DESTINATION bin)
-install(FILES stlink-gui.ui
-        DESTINATION ${INSTALLED_UI_DIR})
-if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    # Install desktop entry
-    install(FILES stlink-gui.desktop 
-            DESTINATION share/applications)
-    # Install icon
-    install(FILES art/stlink-gui.svg 
-            DESTINATION share/icons/hicolor/scalable/apps)
-endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+# install(TARGETS stlink-gui
+#         RUNTIME DESTINATION bin)
+# install(FILES stlink-gui.ui
+#         DESTINATION ${INSTALLED_UI_DIR})
+# if (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+#     # Install desktop entry
+#     install(FILES stlink-gui.desktop 
+#             DESTINATION share/applications)
+#     # Install icon
+#     install(FILES art/stlink-gui.svg 
+#             DESTINATION share/icons/hicolor/scalable/apps)
+# endif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 
