@@ -22,6 +22,26 @@
 #define __attribute__(x)
 #endif
 
+#if defined(__WIN32__) || defined(_WIN32) || defined(WIN32) || defined(__WINDOWS__) || defined(__TOS_WIN__)
+
+#include <windows.h>
+
+inline void delay(unsigned long ms)
+{
+	Sleep(ms);
+}
+
+#else  /* presume POSIX */
+
+#include <unistd.h>
+
+inline void delay(unsigned long ms)
+{
+	usleep(ms * 1000);
+}
+
+#endif
+
 /* todo: stm32l15xxx flash memory, pm0062 manual */
 
 /* stm32f FPEC flash controller interface, pm0063 manual */
@@ -798,6 +818,7 @@ int stlink_load_device_params(stlink_t *sl) {
     // These are fixed...
     sl->flash_base = STM32_FLASH_BASE;
     sl->sram_base = STM32_SRAM_BASE;
+    delay(10);
     stlink_read_debug32(sl,(params->flash_size_reg) & ~3, &flash_size);
     if (params->flash_size_reg & 2)
         flash_size = flash_size >>16;
