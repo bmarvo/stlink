@@ -135,3 +135,5 @@ set_target_properties(${STLINK_LIB_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME
 #         ARCHIVE DESTINATION ${STLINK_LIBRARY_PATH}
 #     )
 # endif()
+
+add_subdirectory(include)
