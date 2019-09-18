@@ -136,4 +136,17 @@ set_target_properties(${STLINK_LIB_STATIC} PROPERTIES OUTPUT_NAME ${PROJECT_NAME
 #     )
 # endif()
 
+# Install udev rules on Linux
+if (CMAKE_SYSTEM_NAME STREQUAL "Linux")
+	if (STLINK_INSTALL_MODPROBE_CONF)
+		install(FILES etc/modprobe.d/stlink_v1.conf
+		DESTINATION ${STLINK_MODPROBED_DIR}/)
+	endif()
+	if (STLINK_INSTALL_UDEV_RULES)
+		file(GLOB RULES_FILES etc/udev/rules.d/*.rules)
+		install(FILES ${RULES_FILES}
+		DESTINATION ${STLINK_UDEV_RULES_DIR}/)
+	endif()
+endif()
+
 add_subdirectory(include)
