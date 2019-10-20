@@ -126,7 +126,22 @@ typedef struct flash_loader {
         TRANSPORT_TYPE_INVALID
     };
 
+    enum status_type {
+        STAT_TYPE_NORMAL,
+        STAT_TYPE_SUCCESS,
+        STAT_TYPE_ERROR,
+        STAT_TYPE_NOTIFY
+    };
+
     typedef struct _stlink stlink_t;
+
+    typedef void (*stlink_write_progress_callback)(void *clientData,
+                                                   uint32_t bytesTotal,
+                                                   uint32_t bytesNow);
+
+    typedef void (*stlink_write_status_callback)(void *clientData,
+                                                 char* infoText,
+                                                 int type);
 
 #include "stlink/backend.h"
 
@@ -163,6 +178,11 @@ typedef struct flash_loader {
         size_t sys_size;
 
         struct stlink_version_ version;
+
+        // callbacks
+        stlink_write_progress_callback progress_cb;
+        stlink_write_status_callback status_cb;
+        void* client_data;
     };
 
     int stlink_enter_swd_mode(stlink_t *sl);
@@ -192,6 +212,10 @@ typedef struct flash_loader {
     int stlink_force_debug(stlink_t *sl);
     int stlink_target_voltage(stlink_t *sl);
     int stlink_set_swdclk(stlink_t *sl, uint16_t divisor);
+    
+    void stlink_set_write_progress_callback(stlink_t *sl, stlink_write_progress_callback cb);
+    void stlink_set_write_status_callback(stlink_t *sl, stlink_write_status_callback cb);
+    void stlink_set_client_data(stlink_t *sl, void* client_data);
 
     int stlink_erase_flash_mass(stlink_t* sl);
     int stlink_write_flash(stlink_t* sl, stm32_addr_t address, uint8_t* data, uint32_t length, uint8_t eraseonly);
