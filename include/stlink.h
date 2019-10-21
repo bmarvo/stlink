@@ -136,8 +136,7 @@ typedef struct flash_loader {
     typedef struct _stlink stlink_t;
 
     typedef void (*stlink_write_progress_callback)(void *clientData,
-                                                   uint32_t bytesTotal,
-                                                   uint32_t bytesNow);
+                                                   uint8_t progress);
 
     typedef void (*stlink_write_status_callback)(void *clientData,
                                                  char* infoText,

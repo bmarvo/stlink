@@ -1966,6 +1966,11 @@ int stlink_verify_write_flash(stlink_t *sl, stm32_addr_t address, uint8_t *data,
     for (off = 0; off < length; off += cmp_size) {
         size_t aligned_size;
 
+        if (sl->progress_cb)
+        {
+            sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)length)*100.0f*0.20f)+85); 
+        }
+
         /* adjust last page size */
         if ((off + cmp_size) > length)
             cmp_size = length - off;
@@ -1992,6 +1997,11 @@ int stlink_verify_write_flash(stlink_t *sl, stm32_addr_t address, uint8_t *data,
     if (sl->status_cb)
     {
         sl->status_cb(sl->client_data, "Verification OK!", STAT_TYPE_SUCCESS);
+    }
+
+    if (sl->progress_cb)
+    {
+        sl->progress_cb(sl->client_data, 100); 
     }
 
     return 0;
@@ -2061,8 +2071,20 @@ int stm32l1_write_half_pages(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uin
 int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t len, uint8_t eraseonly) {
     size_t off;
     flash_loader_t fl;
+    char textBuffer[100];
+
     ILOG("Attempting to write %d (%#x) bytes to stm32 address: %u (%#x)\n",
             len, len, addr, addr);
+
+    if (!eraseonly)
+    {
+        if (sl->status_cb)
+        {
+            sprintf(textBuffer, "Writing %d bytes to address 0x%08X", len, addr);
+            sl->status_cb(sl->client_data, textBuffer, STAT_TYPE_NORMAL);
+        }
+    }
+
     /* check addr range is inside the flash */
     stlink_calculate_pagesize(sl, addr);
     if (addr < sl->flash_base) {
@@ -2097,10 +2119,23 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
 
     for (off = 0; off < len; off += stlink_calculate_pagesize(sl, addr + (uint32_t) off)) {
         /* addr must be an addr inside the page */
+
+        if (sl->progress_cb)
+        {
+            sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)len)*100.0f*0.3f)+5);
+        }
+
         if (stlink_erase_flash_page(sl, addr + (uint32_t) off) == -1) {
             ELOG("Failed to erase_flash_page(%#zx) == -1\n", addr + off);
+
+            if (sl->status_cb)
+            {
+                sl->status_cb(sl->client_data, "Flash erase failed!", STAT_TYPE_ERROR);
+            }
+
             return -1;
         }
+
         fprintf(stdout,"\rFlash page at addr: 0x%08lx erased",
                 (unsigned long)(addr + off));
         fflush(stdout);
@@ -2186,6 +2221,11 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
             size_t size = len - off > buf_size ? buf_size : len - off;
 
             printf("size: %u\n", (unsigned int)size);
+
+            if (sl->progress_cb)
+            {
+                sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)len)*100.0f*0.50f)+35);
+            }
 
             if (stlink_flash_loader_run(sl, &fl, addr + (uint32_t) off, base + off, size) == -1) {
                 ELOG("stlink_flash_loader_run(%#zx) failed! == -1\n", addr + off);
