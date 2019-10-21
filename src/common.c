@@ -888,6 +888,21 @@ int stlink_status(stlink_t *sl) {
     return ret;
 }
 
+void stlink_set_write_progress_callback(stlink_t *sl, stlink_write_progress_callback cb)
+{
+    sl->progress_cb = cb;
+}
+
+void stlink_set_write_status_callback(stlink_t *sl, stlink_write_status_callback cb)
+{
+    sl->status_cb = cb;
+}
+
+void stlink_set_client_data(stlink_t *sl, void* client_data)
+{
+    sl->client_data = client_data;
+}
+
 /**
  * Decode the version bits, originally from -sg, verified with usb
  * @param sl stlink context, assumed to contain valid data in the buffer
@@ -1940,9 +1955,21 @@ int stlink_fcheck_flash(stlink_t *sl, const char* path, stm32_addr_t addr) {
 int stlink_verify_write_flash(stlink_t *sl, stm32_addr_t address, uint8_t *data, unsigned length) {
     size_t off;
     size_t cmp_size = (sl->flash_pgsz > 0x1800)? 0x1800:sl->flash_pgsz;
+    
     ILOG("Starting verification of write complete\n");
+
+    if (sl->status_cb)
+    {
+        sl->status_cb(sl->client_data, "Verifying...", STAT_TYPE_NORMAL);
+    }
+
     for (off = 0; off < length; off += cmp_size) {
         size_t aligned_size;
+
+        if (sl->progress_cb)
+        {
+            sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)length)*100.0f*0.20f)+85); 
+        }
 
         /* adjust last page size */
         if ((off + cmp_size) > length)
@@ -1956,10 +1983,27 @@ int stlink_verify_write_flash(stlink_t *sl, stm32_addr_t address, uint8_t *data,
 
         if (memcmp(sl->q_buf, data + off, cmp_size)) {
 	  ELOG("Verification of flash failed at offset: %u\n", (unsigned int)off);
+
+            if (sl->status_cb)
+            {
+                sl->status_cb(sl->client_data, "Flash verification failed!", STAT_TYPE_ERROR);
+            }
+
             return -1;
         }
     }
     ILOG("Flash written and verified! jolly good!\n");
+
+    if (sl->status_cb)
+    {
+        sl->status_cb(sl->client_data, "Verification OK!", STAT_TYPE_SUCCESS);
+    }
+
+    if (sl->progress_cb)
+    {
+        sl->progress_cb(sl->client_data, 100); 
+    }
+
     return 0;
 
 }
@@ -2027,8 +2071,20 @@ int stm32l1_write_half_pages(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uin
 int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t len, uint8_t eraseonly) {
     size_t off;
     flash_loader_t fl;
+    char textBuffer[100];
+
     ILOG("Attempting to write %d (%#x) bytes to stm32 address: %u (%#x)\n",
             len, len, addr, addr);
+
+    if (!eraseonly)
+    {
+        if (sl->status_cb)
+        {
+            sprintf(textBuffer, "Writing %d bytes to address 0x%08X", len, addr);
+            sl->status_cb(sl->client_data, textBuffer, STAT_TYPE_NORMAL);
+        }
+    }
+
     /* check addr range is inside the flash */
     stlink_calculate_pagesize(sl, addr);
     if (addr < sl->flash_base) {
@@ -2055,12 +2111,31 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
     stlink_core_id(sl);
     /* erase each page */
     int page_count = 0;
+
+    if (sl->status_cb)
+    {
+        sl->status_cb(sl->client_data, "Erasing flash...", STAT_TYPE_NORMAL);
+    }
+
     for (off = 0; off < len; off += stlink_calculate_pagesize(sl, addr + (uint32_t) off)) {
         /* addr must be an addr inside the page */
+
+        if (sl->progress_cb)
+        {
+            sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)len)*100.0f*0.3f)+5);
+        }
+
         if (stlink_erase_flash_page(sl, addr + (uint32_t) off) == -1) {
             ELOG("Failed to erase_flash_page(%#zx) == -1\n", addr + off);
+
+            if (sl->status_cb)
+            {
+                sl->status_cb(sl->client_data, "Flash erase failed!", STAT_TYPE_ERROR);
+            }
+
             return -1;
         }
+
         fprintf(stdout,"\rFlash page at addr: 0x%08lx erased",
                 (unsigned long)(addr + off));
         fflush(stdout);
@@ -2069,6 +2144,11 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
     fprintf(stdout,"\n");
     ILOG("Finished erasing %d pages of %d (%#x) bytes\n",
             page_count, sl->flash_pgsz, sl->flash_pgsz);
+
+    if (sl->status_cb)
+    {
+        sl->status_cb(sl->client_data, "Flash erase complete.", STAT_TYPE_NORMAL);
+    }
 
     if (eraseonly)
         return 0;
@@ -2080,6 +2160,12 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
         /* flash loader initialization */
         if (stlink_flash_loader_init(sl, &fl) == -1) {
             ELOG("stlink_flash_loader_init() == -1\n");
+
+            if (sl->status_cb)
+            {
+                sl->status_cb(sl->client_data, "Could not initialize flash loader!", STAT_TYPE_ERROR);
+            }
+
             return -1;
         }
 
@@ -2125,14 +2211,30 @@ int stlink_write_flash(stlink_t *sl, stm32_addr_t addr, uint8_t* base, uint32_t 
         /* set programming mode */
         set_flash_cr_pg(sl);
 
+        if (sl->status_cb)
+        {
+            sl->status_cb(sl->client_data, "Writing flash...", STAT_TYPE_NORMAL);
+        }
+
 		size_t buf_size = (sl->sram_size > 0x8000) ? 0x8000 : 0x4000;
         for(off = 0; off < len;) {
             size_t size = len - off > buf_size ? buf_size : len - off;
 
             printf("size: %u\n", (unsigned int)size);
 
+            if (sl->progress_cb)
+            {
+                sl->progress_cb(sl->client_data, (uint8_t)(((float)off/(float)len)*100.0f*0.50f)+35);
+            }
+
             if (stlink_flash_loader_run(sl, &fl, addr + (uint32_t) off, base + off, size) == -1) {
                 ELOG("stlink_flash_loader_run(%#zx) failed! == -1\n", addr + off);
+
+                if (sl->status_cb)
+                {
+                    sl->status_cb(sl->client_data, "Failed to run flash loader!", STAT_TYPE_ERROR);
+                }
+
                 return -1;
             }
 
@@ -2501,7 +2603,7 @@ int stlink_fwrite_flash(stlink_t *sl, const char* path, stm32_addr_t addr) {
     unsigned int num_empty, idx;
     uint8_t erased_pattern = stlink_get_erased_pattern(sl);
     mapped_file_t mf = MAPPED_FILE_INITIALIZER;
-
+    
     if (map_file(&mf, path) == -1) {
         ELOG("map_file() == -1\n");
         return -1;

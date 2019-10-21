@@ -781,6 +781,10 @@ stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool reset, char serial[ST
     if (slu == NULL)
         goto on_malloc_error;
 
+    sl->progress_cb = NULL;
+    sl->status_cb = NULL;
+    sl->client_data = NULL;
+
     ugly_init(verbose);
     sl->backend = &_stlink_usb_backend;
     sl->backend_data = slu;
