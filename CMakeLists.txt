@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 2.8.7)
 
+if (POLICY CMP0048)
+	cmake_policy(SET CMP0048 NEW)
+endif (POLICY CMP0048)
+
 project(stlink C)
 
 set(CMAKE_USER_MAKE_RULES_OVERRIDE ${PROJECT_SOURCE_DIR}/cmake/c_flag_overrides.cmake)
