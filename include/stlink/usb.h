@@ -40,12 +40,13 @@ extern "C" {
     /**
      * Open a stlink
      * @param verbose Verbosity loglevel
+     * @param connect_under_reset Assert nRST while connecting
      * @param reset   Reset stlink programmer
      * @param serial  Serial number to search for, when NULL the first stlink found is opened (binary format)
      * @retval NULL   Error while opening the stlink
      * @retval !NULL  Stlink found and ready to use
      */
-    stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool reset, char serial[STLINK_SERIAL_MAX_SIZE]);
+    stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool connect_under_reset, bool reset, char serial[STLINK_SERIAL_MAX_SIZE]);
     size_t stlink_probe_usb(stlink_t **stdevs[]);
     void stlink_probe_usb_free(stlink_t **stdevs[], size_t size);
 

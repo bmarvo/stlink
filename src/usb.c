@@ -767,7 +767,7 @@ static stlink_backend_t _stlink_usb_backend = {
     _stlink_usb_set_swdclk
 };
 
-stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool reset, char serial[STLINK_SERIAL_MAX_SIZE])
+stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool connect_under_reset, bool reset, char serial[STLINK_SERIAL_MAX_SIZE])
 {
     stlink_t* sl = NULL;
     struct stlink_libusb* slu = NULL;
@@ -921,7 +921,17 @@ stlink_t *stlink_open_usb(enum ugly_loglevel verbose, bool reset, char serial[ST
     }
 
     if (stlink_current_mode(sl) != STLINK_DEV_DEBUG_MODE) {
+        if (connect_under_reset)
+        {
+            stlink_jtag_reset(sl, 0);
+        }
+        
         stlink_enter_swd_mode(sl);
+
+        if (connect_under_reset)
+        {
+            stlink_jtag_reset(sl, 1);
+        }
     }
 	
     // Initialize stlink version (sl->version)	
@@ -1023,7 +1033,7 @@ static size_t stlink_probe_usb_devs(libusb_device **devs, stlink_t **sldevs[]) {
         libusb_close(handle);
 
         stlink_t *sl = NULL;
-        sl = stlink_open_usb(0, 1, serial);
+        sl = stlink_open_usb(0, 0, 1, serial);
         if (!sl)
             continue;
 

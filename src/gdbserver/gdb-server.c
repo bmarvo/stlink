@@ -90,10 +90,10 @@ static stlink_t* do_connect(st_state_t *st) {
     switch (st->stlink_version) {
         case 2:
             if(serial_specified){
-                ret = stlink_open_usb(st->logging_level, st->reset, serialnumber);
+                ret = stlink_open_usb(st->logging_level, 0, st->reset, serialnumber);
             }
             else{
-                ret = stlink_open_usb(st->logging_level, st->reset, NULL);
+                ret = stlink_open_usb(st->logging_level, 0, st->reset, NULL);
             }
             break;
         case 1:
